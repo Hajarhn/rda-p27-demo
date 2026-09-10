@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metadata dictionary — RDA P27 demo</title>
+<meta name="description" content="A read-only demo of a web-based tool for governing a research data dictionary. RDA P27, London 2026.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5' fill='%231F3A5F'/%3E%3Cpolygon points='16,9 22,12.5 22,19.5 16,23 10,19.5 10,12.5' fill='none' stroke='%230E5F66' stroke-width='1.6'/%3E%3C/svg%3E">
+<meta property="og:title" content="Metadata dictionary — RDA P27 demo">
+<meta property="og:description" content="A read-only demo of a web-based tool for governing a research data dictionary.">
+<meta property="og:type" content="website">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F5F3;--paper-2:#FFFFFF;--ink:#1A2230;--ink-soft:#4A5262;--mute:#818892;
+    --navy:#1F3A5F;--navy-deep:#152A46;--petrol:#0E5F66;--petrol-bright:#12808A;--petrol-pale:#E2ECEA;
+    --amber:#B0803A;--amber-bg:#F6EFE1;--line:#E3E5E2;
+    --display:'Fraunces',Georgia,serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 28px}
+  a{color:inherit}
+
+  header{border-bottom:1px solid var(--line);background:var(--paper)}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .logo{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:14px;color:var(--navy);text-decoration:none;font-weight:500}
+  .logo svg{width:20px;height:20px}
+  .pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--petrol);background:var(--petrol-pale);border-radius:20px;padding:5px 12px}
+
+  .hero{padding:64px 0 40px;text-align:center}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--petrol);margin-bottom:20px}
+  h1{font-family:var(--display);font-weight:500;font-size:clamp(2.1rem,4.6vw,3.1rem);line-height:1.08;letter-spacing:-.02em;max-width:20ch;margin:0 auto}
+  h1 em{font-style:italic;color:var(--navy)}
+  .lede{font-size:17px;color:var(--ink-soft);max-width:60ch;margin:22px auto 0}
+  .cta{margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn{font-family:var(--mono);font-size:14px;text-decoration:none;border-radius:10px;padding:13px 24px;border:1px solid var(--navy)}
+  .btn.primary{background:var(--navy);color:#fff}
+  .btn.primary:hover{background:var(--navy-deep)}
+  .btn.ghost{color:var(--navy);background:transparent}
+  .btn.ghost:hover{background:var(--paper-2)}
+
+  .shot{margin:20px 0 0;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 22px 50px -28px rgba(26,34,48,.4)}
+  .shot img{display:block;width:100%;height:auto}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:56px 0 0}
+  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .card .ic{width:34px;height:34px;border-radius:9px;background:var(--petrol-pale);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .card .ic svg{width:18px;height:18px;stroke:var(--petrol);fill:none;stroke-width:1.8}
+  .card h3{font-family:var(--display);font-weight:500;font-size:1.2rem;margin-bottom:7px}
+  .card p{font-size:14px;color:var(--ink-soft);line-height:1.55}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+
+  .band{background:var(--navy);color:#fff;border-radius:16px;padding:38px 40px;margin:56px 0 0;position:relative;overflow:hidden}
+  .band::after{content:"";position:absolute;right:-50px;bottom:-50px;width:200px;height:200px;border:1px solid rgba(255,255,255,.1);border-radius:50%}
+  .band .eyebrow{color:#8fb0c4}
+  .band p{font-family:var(--display);font-size:1.2rem;line-height:1.6;color:#eaf0f6;max-width:60ch;position:relative;z-index:1}
+
+  footer{margin-top:56px;border-top:1px solid var(--line);padding:44px 0 60px;text-align:center}
+  footer .eyebrow{margin-bottom:14px}
+  footer .email{font-family:var(--display);font-style:italic;font-size:1.35rem;color:var(--navy);text-decoration:none;border-bottom:1px solid var(--navy);padding-bottom:2px}
+  footer .email:hover{color:var(--petrol);border-color:var(--petrol)}
+  footer .more{margin-top:18px;font-family:var(--mono);font-size:13px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  footer .more a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:1px}
+  footer .more a:hover{color:var(--petrol);border-color:var(--petrol)}
+  footer .note{font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:24px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#">
+      <svg viewBox="0 0 32 32"><polygon points="16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5" fill="#1F3A5F"/><polygon points="16,9 22,12.5 22,19.5 16,23 10,19.5 10,12.5" fill="none" stroke="#0E5F66" stroke-width="1.6"/></svg>
+      metadata dictionary
+    </a>
+    <span class="pill">RDA P27 demo</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="eyebrow">RDA 27th Plenary · London · Oct 2026</div>
+    <h1>Governing the <em>data dictionary</em>, not the spreadsheet.</h1>
+    <p class="lede">
+      A read-only demo of a web-based tool for keeping a research data dictionary accurate,
+      searchable, and shared. It holds descriptions of variables only, never participant data.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="index-demo.html">Open the demo →</a>
+      <a class="btn ghost" href="#about">What is it?</a>
+    </div>
+  </section>
+
+  <figure class="shot">
+    <img src="docs/screen-viewer.png" alt="The viewer showing a variable with its definition, value codes, properties, and change history">
+  </figure>
+
+  <section class="cols" id="about">
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+      <h3>One shared dictionary</h3>
+      <p>Browse variables by instrument and search by name, so the whole team reads the same definitions instead of scattered spreadsheet copies.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <h3>Every change recorded</h3>
+      <p>Each variable keeps a change history, so anyone can see how a definition or code evolved and when.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/></svg></div>
+      <h3>Standards-aware</h3>
+      <p>Variables carry their definitions, value codes, units, and the standard terms they map to (SNOMED CT, LOINC).</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="eyebrow">Why it matters</div>
+    <p>
+      A data dictionary is the reference everyone depends on, yet in most projects it lives in a
+      shared spreadsheet edited by many hands. Rows get overwritten, definitions drift, and no one
+      can say who changed what. Those errors surface late, during reuse, when they cost the most.
+      Treating the dictionary as something worth governing is a simple change that prevents them.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="eyebrow">Interested, or want to follow along?</div>
+    <a class="email" href="mailto:hajar.hasannejad@gmail.com">hajar.hasannejad@gmail.com</a>
+    <div class="more">
+      <a href="https://hajarhn.github.io/Main/">Portfolio</a>
+      <a href="https://github.com/Hajarhn">GitHub</a>
+      <a href="https://orcid.org/0000-0001-5262-7399">ORCID</a>
+    </div>
+    <div class="note">Demo with sample data only · no participant data · tool in development</div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDA P27 demo — metadata dictionary viewer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5' fill='%231F3A5F'/%3E%3Cpolygon points='16,9 22,12.5 22,19.5 16,23 10,19.5 10,12.5' fill='none' stroke='%230E5F66' stroke-width='1.6'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* poster theme: navy + petrol + amber + grey */
+    --paper:#F4F5F3;--paper-2:#FFFFFF;--ink:#1A2230;--ink-soft:#4A5262;--mute:#818892;
+    --navy:#1F3A5F;--navy-deep:#152A46;--petrol:#0E5F66;--petrol-pale:#E2ECEA;
+    --amber:#B0803A;--amber-bg:#F6EFE1;--green:#2E6B3E;--green-bg:#DFEBDF;--line:#E3E5E2;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;-webkit-font-smoothing:antialiased}
+
+  .demo-note{background:var(--navy-deep);color:#cfd8e6;font-family:var(--mono);font-size:12px;text-align:center;padding:7px 14px;letter-spacing:.02em}
+  .demo-note b{color:#fff;font-weight:500}
+
+  .topbar{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:54px}
+  .topbar .title{font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px}
+  .topbar .title .logo{width:20px;height:20px}
+  .topbar .title small{font-weight:400;color:#aebdd0;font-family:var(--mono);font-size:12px}
+  .topbar .tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#cfe0dd;border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:5px 12px}
+
+  .app{display:grid;grid-template-columns:310px 1fr;height:calc(100vh - 54px - 34px - 40px);min-height:520px}
+  .list-pane{border-right:1px solid var(--line);background:var(--paper-2);display:flex;flex-direction:column;overflow:hidden}
+  .list-head{padding:16px 16px 10px}
+  .instr-select{width:100%;font-family:var(--sans);font-size:13.5px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);cursor:pointer}
+  .search{width:100%;margin-top:10px;font-family:var(--sans);font-size:13.5px;padding:9px 11px 9px 32px;border:1px solid var(--line);border-radius:8px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23818892' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 11px center}
+  .count{font-family:var(--mono);font-size:11px;color:var(--mute);padding:8px 18px 2px}
+  .var-list{overflow-y:auto;flex:1;padding:2px 8px 14px}
+  .var-item{display:flex;gap:10px;align-items:baseline;padding:9px 10px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+  .var-item:hover{background:var(--paper)}
+  .var-item.sel{background:var(--petrol-pale);border-color:var(--petrol)}
+  .var-item .num{font-family:var(--mono);font-size:11px;color:var(--mute);min-width:20px}
+  .var-item .nm{font-family:var(--mono);font-size:12.5px;color:var(--ink);word-break:break-all;flex:1}
+  .var-item .fx{font-family:var(--mono);font-size:11px;color:var(--amber);font-style:italic}
+  .grp-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--petrol);padding:14px 10px 6px}
+
+  .detail{overflow-y:auto;padding:32px 40px}
+  .detail h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
+  .detail .code{font-family:var(--mono);font-size:12.5px;color:var(--mute);margin-top:4px}
+  .tags{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+  .tag-chip{font-family:var(--mono);font-size:11px;border-radius:20px;padding:4px 11px;font-weight:500}
+  .tag-chip.coded{background:var(--petrol-pale);color:var(--petrol)}
+  .tag-chip.std{background:var(--green-bg);color:var(--green)}
+  .tag-chip.derived{background:var(--amber-bg);color:var(--amber)}
+
+  .panels{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:26px}
+  @media(max-width:860px){.panels{grid-template-columns:1fr}.app{grid-template-columns:1fr}.list-pane{display:none}}
+  .panel{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .panel h3{font-size:12.5px;color:var(--navy);margin-bottom:16px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:10px 14px}
+  .kv dt{font-family:var(--mono);font-size:11.5px;color:var(--mute);letter-spacing:.02em}
+  .kv dd{font-size:14px;color:var(--ink);line-height:1.5}
+  .kv dd.mono{font-family:var(--mono);font-size:13px}
+  .field{margin-bottom:18px}
+  .field:last-child{margin-bottom:0}
+  .flabel{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.04em;margin-bottom:4px}
+  .fval{font-size:14px;color:var(--ink);line-height:1.55}
+  .codes{display:flex;flex-direction:column;gap:6px}
+  .code-row{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:8px 12px}
+  .code-row .lbl{font-weight:500;font-size:13.5px}
+  .code-row .cd{font-family:var(--mono);font-size:12px;color:var(--mute)}
+  .history .hitem{border-left:2px solid var(--line);padding:0 0 16px 14px;position:relative}
+  .history .hitem:last-child{padding-bottom:0}
+  .history .hitem::before{content:"";position:absolute;left:-5px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--petrol);border:2px solid var(--paper-2)}
+  .history .hdate{font-family:var(--mono);font-size:11.5px;color:var(--ink);font-weight:500;margin-bottom:2px}
+  .history .htext{font-size:13px;color:var(--ink-soft);line-height:1.5}
+  .rel{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);line-height:1.9}
+  .rel a{color:var(--petrol);text-decoration:none;cursor:pointer}
+  .rel a:hover{text-decoration:underline}
+
+  .footer{font-family:var(--mono);font-size:11px;color:var(--mute);padding:12px 40px;border-top:1px solid var(--line);background:var(--paper-2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .footer b{color:var(--ink-soft);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="demo-note"><b>RDA P27 demo</b> · read-only viewer · sample data only, no participant data</div>
+
+<div class="topbar">
+  <div class="title">
+    <svg class="logo" viewBox="0 0 32 32"><polygon points="16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5" fill="#0E5F66"/><polygon points="16,9 22,12.5 22,19.5 16,23 10,19.5 10,12.5" fill="none" stroke="#fff" stroke-width="1.6"/></svg>
+    metadata dictionary <small>· demo cohort</small>
+  </div>
+  <span class="tag">viewer</span>
+</div>
+
+<div class="app">
+  <aside class="list-pane">
+    <div class="list-head">
+      <select class="instr-select" id="instr" onchange="render()">
+        <option value="all">All instruments</option>
+        <option value="Symptom list">Symptom list</option>
+        <option value="Demographics">Demographics</option>
+        <option value="Lab panel">Lab panel</option>
+      </select>
+      <input class="search" id="search" placeholder="Search variables…" oninput="render()">
+    </div>
+    <div class="count" id="count"></div>
+    <div class="var-list" id="varlist"></div>
+  </aside>
+
+  <main class="detail" id="detail"></main>
+</div>
+
+<div class="footer">
+  <span>Signed in as <b>viewer</b> · metadata only, never participant data</span>
+  <span><b>RDA P27</b> · London · Oct 2026</span>
+</div>
+
+<script>
+  var VARS = [
+    { id:"fever", name:"fever", instrument:"Symptom list", group:"Symptoms",
+      label:"Fever", datatype:"Categorical", collection:"Self-report questionnaire",
+      coded:true, standard:"SNOMED CT 386661006",
+      definition:"Whether the participant had or currently has fever during the infection or since the last follow-up visit. Not a lifetime history of fever.",
+      codes:[["Yes","373066001"],["No","373067005"],["Unknown","261665006"]],
+      missing:"Unknown (261665006)",
+      related:[["fever_onset","Fever onset date"],["fever_severity","Fever severity"]],
+      history:[["12 Mar 2026","Definition clarified: current or since last visit."],["03 Feb 2026","Unknown value added."],["18 Jan 2026","Imported from source dictionary."]] },
+
+    { id:"fatigue_sev", name:"fatigue_severity", instrument:"Symptom list", group:"Symptoms",
+      label:"Fatigue severity", datatype:"Ordinal", collection:"Self-report questionnaire",
+      coded:true, standard:"SNOMED CT 84229001",
+      definition:"Self-reported severity of fatigue over the recall period, on a 0 to 10 scale.",
+      codes:[["None (0)","260413007"],["Mild (1-3)","255604002"],["Moderate (4-6)","6736007"],["Severe (7-10)","24484000"]],
+      missing:"Not answered (blank)",
+      related:[["fatigue_freq","Fatigue frequency"]],
+      history:[["28 Feb 2026","Recall period recorded explicitly (last 7 days)."],["18 Jan 2026","Imported from source dictionary."]] },
+
+    { id:"age", name:"age_years", instrument:"Demographics", group:"Demographics",
+      label:"Age", datatype:"Integer", unit:"years", collection:"Derived from date of birth",
+      coded:false, standard:"LOINC 30525-0",
+      definition:"Participant age in completed years at the baseline visit.",
+      codes:[], missing:"Blank",
+      related:[["birth_year","Year of birth"]],
+      history:[["18 Jan 2026","Imported from source dictionary."]] },
+
+    { id:"sex", name:"sex_at_birth", instrument:"Demographics", group:"Demographics",
+      label:"Sex at birth", datatype:"Categorical", collection:"Registry record",
+      coded:true, standard:"LOINC 76689-9",
+      definition:"Sex assigned at birth, as recorded in the source record.",
+      codes:[["Female","248152002"],["Male","248153007"],["Unknown","261665006"]],
+      missing:"Unknown (261665006)",
+      related:[],
+      history:[["18 Jan 2026","Imported from source dictionary."]] },
+
+    { id:"crp", name:"crp_mgl", instrument:"Lab panel", group:"Inflammation",
+      label:"C-reactive protein", datatype:"Continuous", unit:"mg/L", collection:"Laboratory assay",
+      coded:false, standard:"LOINC 1988-5",
+      definition:"C-reactive protein concentration measured in serum. Unit is mg/L; sources reporting mg/dL must be converted.",
+      codes:[], missing:"Not measured (blank)",
+      related:[["crp_method","CRP assay method"]],
+      history:[["05 Mar 2026","Unit fixed to mg/L after a mismatch was found in one source."],["18 Jan 2026","Imported from source dictionary."]] },
+
+    { id:"bmi", name:"bmi_calc", instrument:"Demographics", group:"Derived",
+      label:"Body mass index", datatype:"Continuous", unit:"kg/m²", collection:"Derived",
+      coded:false, standard:"LOINC 39156-5", derived:true,
+      definition:"Body mass index, derived from weight and height.",
+      calc:"{weight_kg} / ({height_m} * {height_m})",
+      codes:[], missing:"Blank if inputs missing",
+      related:[["weight_kg","Weight"],["height_m","Height"]],
+      history:[["20 Jan 2026","Derivation formula documented."],["18 Jan 2026","Imported from source dictionary."]] }
+  ];
+
+  var selId="fever";
+
+  function currentList(){
+    var instr=document.getElementById('instr').value;
+    var q=(document.getElementById('search').value||'').toLowerCase();
+    return VARS.filter(function(v){
+      if(instr!=='all' && v.instrument!==instr) return false;
+      if(q && !(v.name.toLowerCase().includes(q)||v.label.toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }
+
+  function render(){
+    var list=currentList();
+    document.getElementById('count').textContent = list.length + (list.length===1?' variable':' variables');
+    var html='', lastG=null, n=0;
+    list.forEach(function(v){
+      if(v.group!==lastG){ html+='<div class="grp-label">'+v.group+'</div>'; lastG=v.group; }
+      n++;
+      html+='<div class="var-item'+(v.id===selId?' sel':'')+'" onclick="selectVar(\''+v.id+'\')">'+
+              '<span class="num">'+n+'</span><span class="nm">'+v.name+'</span>'+
+              (v.derived?'<span class="fx">ƒx</span>':'')+'</div>';
+    });
+    document.getElementById('varlist').innerHTML=html||'<div class="grp-label">no matches</div>';
+    var v=VARS.find(function(x){return x.id===selId;});
+    document.getElementById('detail').innerHTML = v? detailView(v) : '';
+  }
+
+  function selectVar(id){ selId=id; render(); }
+
+  function tagHtml(v){
+    var t='';
+    if(v.coded) t+='<span class="tag-chip coded">coded</span>';
+    if(v.standard) t+='<span class="tag-chip std">'+v.standard+'</span>';
+    if(v.derived) t+='<span class="tag-chip derived">derived ƒx</span>';
+    return t;
+  }
+
+  function detailView(v){
+    var codes = v.codes.length ? '<div class="field"><div class="flabel">Value codes</div><div class="codes">'+
+      v.codes.map(function(c){return '<div class="code-row"><span class="lbl">'+c[0]+'</span><span class="cd">'+c[1]+'</span></div>';}).join('')+'</div></div>' : '';
+    var calc = v.calc ? '<div class="field"><div class="flabel">Derivation formula</div><div class="fval" style="font-family:var(--mono);font-size:13px">'+v.calc+'</div></div>' : '';
+    var props = '<dl class="kv">'+
+      '<dt>Data type</dt><dd>'+v.datatype+'</dd>'+
+      (v.unit?'<dt>Unit</dt><dd class="mono">'+v.unit+'</dd>':'')+
+      '<dt>Collection</dt><dd>'+v.collection+'</dd>'+
+      '<dt>Instrument</dt><dd>'+v.instrument+'</dd>'+
+      (v.standard?'<dt>Standard code</dt><dd class="mono">'+v.standard+'</dd>':'')+
+      (v.missing?'<dt>Missing values</dt><dd>'+v.missing+'</dd>':'')+
+    '</dl>';
+    var rel = v.related.length ? '<div class="field"><div class="flabel">Related variables</div><div class="rel">'+
+      v.related.map(function(r){return '<a onclick="jumpTo(\''+r[0]+'\')">'+r[0]+'</a>  '+r[1];}).join('<br>')+'</div></div>' : '';
+    var hist = '<div class="panel history" style="margin-top:20px"><h3>Change history</h3>'+
+      v.history.map(function(h){return '<div class="hitem"><div class="hdate">'+h[0]+'</div><div class="htext">'+h[1]+'</div></div>';}).join('')+'</div>';
+    return (
+      '<div><h1>'+v.label+'</h1><div class="code">'+v.name+'  ·  '+v.instrument+'</div>'+
+        '<div class="tags">'+tagHtml(v)+'</div></div>'+
+      '<div class="panels">'+
+        '<div class="panel">'+
+          '<h3>Definition</h3>'+
+          '<div class="field"><div class="fval">'+v.definition+'</div></div>'+
+          calc+codes+
+        '</div>'+
+        '<div>'+
+          '<div class="panel"><h3>Properties</h3>'+props+ (rel?'<div style="margin-top:16px">'+rel+'</div>':'') +'</div>'+
+          hist+
+        '</div>'+
+      '</div>'
+    );
+  }
+
+  function jumpTo(name){
+    var v=VARS.find(function(x){return x.name===name;});
+    if(v){ selId=v.id; render(); } else { alert('In the full tool this opens '+name+'.'); }
+  }
+
+  render();
+</script>
+</body>
+</html>
