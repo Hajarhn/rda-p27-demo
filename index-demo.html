@@ -51,7 +51,6 @@
   .tag-chip.derived{background:var(--amber-bg);color:var(--amber)}
 
   .panels{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:26px}
-  @media(max-width:860px){.panels{grid-template-columns:1fr}.app{grid-template-columns:1fr}.list-pane{display:none}}
   .panel{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px}
   .panel h3{font-size:12.5px;color:var(--navy);margin-bottom:16px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
   .kv{display:grid;grid-template-columns:130px 1fr;gap:10px 14px}
@@ -77,6 +76,40 @@
 
   .footer{font-family:var(--mono);font-size:11px;color:var(--mute);padding:12px 40px;border-top:1px solid var(--line);background:var(--paper-2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
   .footer b{color:var(--ink-soft);font-weight:500}
+
+  /* ---------- mobile: navigation drawer + responsive layout ---------- */
+  .menu-btn{display:none;background:none;border:1px solid rgba(255,255,255,.28);color:#fff;
+    width:38px;height:38px;border-radius:9px;cursor:pointer;align-items:center;justify-content:center;flex:none}
+  .menu-btn svg{width:20px;height:20px}
+  .drawer-x{position:absolute;top:9px;right:9px;display:none;background:none;border:none;
+    font-size:20px;color:var(--mute);cursor:pointer;line-height:1;padding:3px 8px}
+  .backdrop{position:fixed;inset:0;background:rgba(10,18,30,.45);z-index:40;opacity:0;
+    pointer-events:none;transition:opacity .2s}
+
+  @media(max-width:860px){
+    .topbar{padding:0 12px}
+    .topbar .title small{display:none}
+    .menu-btn{display:inline-flex}
+
+    .app{grid-template-columns:1fr;height:auto;min-height:0}
+    .list-pane{position:fixed;top:0;left:0;bottom:0;width:min(86vw,330px);z-index:50;
+      box-shadow:2px 0 22px rgba(0,0,0,.20);transform:translateX(-100%);transition:transform .25s ease}
+    body.nav-open .list-pane{transform:translateX(0)}
+    body.nav-open .backdrop{opacity:1;pointer-events:auto}
+    .list-head{position:relative;padding-right:46px}
+    .drawer-x{display:block}
+
+    .detail{padding:20px 15px;overflow:visible}
+    .detail h1{font-size:22px}
+    .panels{grid-template-columns:1fr;gap:14px;margin-top:18px}
+    .panel{padding:16px}
+    .kv{grid-template-columns:100px 1fr;gap:8px 12px}
+    .footer{padding:12px 15px;font-size:10.5px}
+  }
+  @media(max-width:440px){
+    .kv{grid-template-columns:1fr;gap:2px 0}
+    .kv dt{margin-top:9px}
+  }
 </style>
 </head>
 <body>
@@ -85,6 +118,9 @@
 
 <div class="topbar">
   <div class="title">
+    <button class="menu-btn" onclick="toggleNav()" aria-label="Open variable list">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <svg class="logo" viewBox="0 0 32 32"><polygon points="16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5" fill="#0E5F66"/><polygon points="16,9 22,12.5 22,19.5 16,23 10,19.5 10,12.5" fill="none" stroke="#fff" stroke-width="1.6"/></svg>
     metadata dictionary <small>· demo cohort</small>
   </div>
@@ -94,6 +130,7 @@
 <div class="app">
   <aside class="list-pane">
     <div class="list-head">
+      <button class="drawer-x" onclick="closeNav()" aria-label="Close">&#10005;</button>
       <select class="instr-select" id="instr" onchange="render()">
         <option value="all">All instruments</option>
         <option value="Symptom list">Symptom list</option>
@@ -108,6 +145,8 @@
 
   <main class="detail" id="detail"></main>
 </div>
+
+<div class="backdrop" onclick="closeNav()"></div>
 
 <div class="footer">
   <span>Signed in as <b>viewer</b> · metadata only, never participant data</span>
@@ -197,7 +236,9 @@
     document.getElementById('detail').innerHTML = v? detailView(v) : '';
   }
 
-  function selectVar(id){ selId=id; render(); }
+  function selectVar(id){ selId=id; closeNav(); render(); }
+  function toggleNav(){ document.body.classList.toggle('nav-open'); }
+  function closeNav(){ document.body.classList.remove('nav-open'); }
 
   function tagHtml(v){
     var t='';
